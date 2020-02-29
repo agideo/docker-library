@@ -1,0 +1,64 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'aliyunsdkcore'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: example.rb --type cname --rr xxx --domain xxx.com --value yyy.com --ak xxxx --sk yyyy"
+
+  opts.on('-t TYPE', '--type TYPE', '解析记录类型') do |value|
+    options[:type] = value
+  end
+
+  opts.on('-r RR', '--rr RR', '主机记录') do |value|
+    options[:rr] = value
+  end
+
+  opts.on('-d DOMAIN', '--domain DOMAIN', '域名名称') do |value|
+    options[:domain] = value
+  end
+
+  opts.on('-v VALUE', '--value VALUE', '记录值') do |value|
+    options[:value] = value
+  end
+
+  opts.on('-a AK', '--ak AK', 'access_key_id') do |value|
+    options[:ak] = value
+  end
+
+  opts.on('-s SK', '--sk SK', 'access_key_secret') do |value|
+    options[:sk] = value
+  end
+
+end.parse!
+
+client = RPCClient.new(
+  access_key_id:     options[:ak],
+  access_key_secret: options[:sk],
+  endpoint: 'https://alidns.aliyuncs.com',
+  api_version: '2015-01-09'
+)
+
+domainName = options[:domain]
+if domainName.include?("*")
+  domainName = (options[:domain].split(".") - ["*"]).join(".")
+end
+
+puts "Arguments:"
+puts options
+
+response = client.request(
+  action: 'AddDomainRecord',
+  params: {
+    "DomainName": domainName,
+    "RR": options[:rr],
+    "Type": options[:type].upcase,
+    "Value": options[:value],
+},
+  opts: {
+    method: 'POST'
+  }
+)
+puts "Response:"
+print response
